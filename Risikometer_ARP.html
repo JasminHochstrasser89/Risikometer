@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Risikometer – Einstufung von Planungs- und Bauvorhaben – ARP Solothurn</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap');
+
+  :root{
+    --paper:#F7F6F2;
+    --ink:#1A1A18;
+    --line:#CFCDC4;
+    --red:#C0001A;
+    --green:#4C9A2A;
+    --amber:#E0921E;
+    --muted:#6B6A63;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);
+    font-family:'Source Sans 3',sans-serif; min-height:100%;}
+  .app{max-width:960px;margin:0 auto;padding:28px 20px 60px;}
+
+  .masthead{display:flex;justify-content:space-between;align-items:flex-end;
+    border-bottom:2px solid var(--ink); padding-bottom:10px; margin-bottom:28px;}
+  .masthead h1{font-family:'Source Serif 4',serif; font-weight:700; font-size:22px;
+    margin:0; letter-spacing:.2px;}
+  .masthead .kennung{font-family:'Roboto Mono',monospace; font-size:11px; color:var(--muted);
+    text-align:right; line-height:1.5; cursor:pointer;}
+  .plate{display:inline-block; background:var(--red); color:#fff; font-family:'Roboto Mono',monospace;
+    font-size:11px; padding:2px 6px; letter-spacing:.5px; margin-bottom:4px;}
+
+  .panel{border:1px solid var(--line); background:#fff; padding:26px; margin-bottom:20px;}
+  .panel h2{font-family:'Source Serif 4',serif; font-size:18px; margin:0 0 14px;}
+  label{display:block; font-size:13px; color:var(--muted); margin-bottom:6px; font-weight:600;
+    text-transform:uppercase; letter-spacing:.4px;}
+  input[type=text]{width:100%; padding:10px 12px; border:1px solid var(--line); background:var(--paper);
+    font-family:'Source Sans 3',sans-serif; font-size:15px; color:var(--ink);}
+  input[type=text]:focus{outline:2px solid var(--red); outline-offset:1px;}
+  input.codeinput{font-family:'Roboto Mono',monospace; font-size:24px; letter-spacing:6px; text-align:center;
+    text-transform:uppercase;}
+
+  .btnrow{display:flex; gap:10px; margin-top:18px; flex-wrap:wrap;}
+  button{font-family:'Source Sans 3',sans-serif; font-weight:600; font-size:14px;
+    padding:11px 20px; border:1px solid var(--ink); background:var(--ink); color:#fff;
+    cursor:pointer; letter-spacing:.2px;}
+  button:hover{background:#000;}
+  button.secondary{background:#fff; color:var(--ink);}
+  button.secondary:hover{background:var(--paper);}
+  button.danger{background:#fff; color:var(--red); border-color:var(--red);}
+  button:focus-visible{outline:2px solid var(--red); outline-offset:2px;}
+  button:disabled{opacity:.4; cursor:not-allowed;}
+
+  .hint{font-size:13px; color:var(--muted); margin-top:10px; line-height:1.5;}
+  .error{font-size:13px; color:var(--red); margin-top:10px; font-weight:600;}
+
+  .choicegrid{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:6px;}
+  @media (max-width:640px){ .choicegrid{grid-template-columns:1fr;} }
+  .choice{border:1px solid var(--line); padding:20px; cursor:pointer; background:var(--paper); transition:border-color .15s;}
+  .choice:hover{border-color:var(--ink);}
+  .choice .plate{margin-bottom:10px;}
+  .choice h3{font-family:'Source Serif 4',serif; font-size:16px; margin:0 0 6px;}
+  .choice p{font-size:13px; color:var(--muted); margin:0; line-height:1.5;}
+  .choice.disabled{opacity:.5; cursor:not-allowed;}
+
+  .interstitial{text-align:center; padding:60px 20px;}
+  .interstitial .plate{margin-bottom:18px;}
+  .interstitial h2{font-family:'Source Serif 4',serif; font-size:26px; margin:0 0 8px;}
+  .interstitial p{color:var(--muted); font-size:15px; max-width:440px; margin:0 auto 26px;}
+
+  .codeshow{font-family:'Roboto Mono',monospace; font-size:42px; letter-spacing:10px; text-align:center;
+    padding:20px; border:2px dashed var(--ink); margin:18px auto; max-width:340px;}
+
+  .matrixwrap{position:relative; user-select:none; margin-left:112px;}
+  @media (max-width:560px){ .matrixwrap{margin-left:78px;} .axisticks-y{left:-58px;width:36px;font-size:10px;} .axistitle-y{left:-78px;font-size:11px;} }
+  .matrix-title{font-family:'Roboto Mono',monospace; font-size:11px; color:var(--muted);
+    text-transform:uppercase; letter-spacing:.6px; margin-bottom:10px; display:flex; justify-content:space-between;}
+
+  .matrix{
+    position:relative; width:100%; aspect-ratio:5/4; border:1px solid var(--ink);
+    background:
+      linear-gradient(to top right, var(--green) 0%, var(--amber) 50%, var(--red) 100%);
+    cursor:crosshair;
+    overflow:hidden;
+  }
+  .gridlines{position:absolute; inset:0; pointer-events:none;}
+  .gridlines .v, .gridlines .h{position:absolute; background:rgba(255,255,255,.55);}
+  .gridlines .v{top:0; bottom:0; width:1px;}
+  .gridlines .h{left:0; right:0; height:1px;}
+
+  .marker{position:absolute; width:16px; height:16px; margin-left:-8px; margin-top:-8px;
+    border-radius:50%; background:#fff; border:2px solid var(--ink);
+    box-shadow:0 0 0 2px rgba(255,255,255,.6);}
+  .marker.pending{background:var(--ink);}
+  .marker-label{position:absolute; font-family:'Roboto Mono',monospace; font-size:11px;
+    background:var(--ink); color:#fff; padding:1px 5px; transform:translate(10px,-22px); white-space:nowrap;}
+
+  .axisticks-x{margin-top:6px; display:grid; grid-template-columns:repeat(4,1fr);
+    font-family:'Roboto Mono',monospace; font-size:11px; color:var(--muted); letter-spacing:.2px;}
+  .axisticks-x span{text-align:center;}
+  .axistitle-x{margin-top:6px; text-align:center; font-size:12px; font-weight:600; letter-spacing:.3px;}
+
+  .axisticks-y{position:absolute; left:-58px; top:0; bottom:34px; width:50px;
+    display:grid; grid-template-rows:repeat(4,1fr); font-family:'Roboto Mono',monospace;
+    font-size:11px; color:var(--muted); letter-spacing:.2px;}
+  .axisticks-y span{display:flex; align-items:center; justify-content:flex-end; text-align:right; padding-right:6px;}
+  .axistitle-y{writing-mode:vertical-rl; transform:rotate(180deg); font-size:12px; font-weight:600;
+    letter-spacing:.3px; position:absolute; left:-112px; top:0; bottom:34px; display:flex;
+    align-items:center; justify-content:center;}
+
+  .confirmbar{display:flex; justify-content:space-between; align-items:center; margin-top:18px;}
+  .confirmbar .status{font-family:'Roboto Mono',monospace; font-size:12px; color:var(--muted);}
+
+  .resultlist{border-collapse:collapse; width:100%; margin-top:6px;}
+  .resultlist th{text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.4px;
+    color:var(--muted); border-bottom:1px solid var(--ink); padding:6px 8px; font-weight:600;}
+  .resultlist td{padding:8px; border-bottom:1px solid var(--line); font-size:14px;}
+  .zonetag{font-family:'Roboto Mono',monospace; font-size:11px; padding:2px 7px; color:#fff;}
+
+  .legend{display:flex; gap:18px; margin-top:14px; flex-wrap:wrap;}
+  .legend .item{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted);}
+  .legend .swatch{width:12px; height:12px; border:1px solid var(--ink);}
+
+  .toggle-row{display:flex; align-items:center; gap:8px; margin-top:14px; font-size:13px; color:var(--muted);}
+  .toggle-row input{width:auto;}
+
+  .waitlist{display:flex; flex-wrap:wrap; gap:8px; margin:16px 0;}
+  .waitlist .chip{background:var(--paper); border:1px solid var(--line); padding:4px 10px; font-size:13px;
+    font-family:'Roboto Mono',monospace;}
+
+  .spinner{display:inline-block; width:14px; height:14px; border:2px solid var(--line);
+    border-top-color:var(--red); border-radius:50%; animation:spin .7s linear infinite; margin-right:8px; vertical-align:-2px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .backlink{font-size:12px; color:var(--muted); cursor:pointer; text-decoration:underline; display:inline-block; margin-bottom:14px;}
+
+  code.inline{font-family:'Roboto Mono',monospace; font-size:12px; background:var(--paper); border:1px solid var(--line); padding:1px 5px;}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+
+/* ============================================================
+   FIREBASE-KONFIGURATION – HIER EINTRAGEN
+   Ersetze das Objekt unten mit deiner eigenen Firebase-Konfiguration
+   (Firebase Console → Projekteinstellungen → "Meine Apps" → Web-App → Konfiguration).
+   Siehe Einrichtungsanleitung, die dir separat mitgeliefert wurde.
+   ============================================================ */
+const firebaseConfig = {
+
+    apiKey: "AIzaSyDl6qzAW9OXa7lCkwHczMgd-UV-zqOhN2I",
+
+    authDomain: "risikometer.firebaseapp.com",
+
+    // ↓ Dieses Feld fehlte in deinem Snippet und muss von Hand ergänzt werden.
+    // Zu finden in der Firebase Console → Build → Realtime Database → Tab "Daten",
+    // steht dort ganz oben direkt über der leeren Tabelle (Adresse mit "https://...firebasedatabase.app").
+    databaseURL: "https://risikometer-default-rtdb.europe-west1.firebasedatabase.app",
+
+    projectId: "risikometer",
+
+    storageBucket: "risikometer.firebasestorage.app",
+
+    messagingSenderId: "833090360547",
+
+    appId: "1:833090360547:web:a2218033bf2e127a53a1d6"
+
+  };
+
+/* ============================================================ */
+
+const CONFIG_IS_PLACEHOLDER = firebaseConfig.apiKey === "DEIN_API_KEY";
+
+let app, auth, db;
+let authReady = false;
+let authError = '';
+
+async function initFirebase(){
+  if(CONFIG_IS_PLACEHOLDER) return;
+  try{
+    app = firebase.initializeApp(firebaseConfig);
+    auth = firebase.auth();
+    db = firebase.database();
+    await auth.signInAnonymously();
+    authReady = true;
+  }catch(e){
+    authError = (e && e.message) ? e.message : String(e);
+  }
+}
+
+const state = {
+  mode: null,          // null | 'solo' | 'host' | 'participant'
+  screen: 'landing',
+  caseTitle: '',
+  currentName: '',
+  points: [],
+  pendingXY: null,
+  showThreshold: false,
+
+  sessionCode: '',
+  joinCodeInput: '',
+  participantId: null,
+  waitingNames: [],
+  errorMsg: '',
+};
+
+let activeListenerRef = null;
+function stopListening(){
+  if(activeListenerRef){ activeListenerRef.off(); activeListenerRef = null; }
+}
+
+function el(html){ const d=document.createElement('div'); d.innerHTML=html.trim(); return d.firstChild; }
+
+function zoneFor(x,y){
+  const s = x + y;
+  if(s < 0.65) return {label:'Bagatelle', color:'#4C9A2A'};
+  if(s < 1.35) return {label:'Erhöhte Prüftiefe', color:'#E0921E'};
+  return {label:'Grosse Tragweite', color:'#C0001A'};
+}
+
+function genCode(){
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let c = '';
+  for(let i=0;i<4;i++) c += chars[Math.floor(Math.random()*chars.length)];
+  return c;
+}
+
+const X_LABELS = ['gering', 'mässig', 'erheblich', 'gross'];       // Sensitivität der Umgebung
+const Y_LABELS = ['klein', 'mittel', 'erheblich', 'gross'];        // Komplexität des Beurteilungsgegenstands
+const X_AXIS_TITLE = 'Sensitivität der Umgebung';
+const Y_AXIS_TITLE = 'Komplexität des Beurteilungsgegenstands';
+
+function render(){
+  stopListening();
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+  app.appendChild(masthead());
+
+  if(CONFIG_IS_PLACEHOLDER){
+    app.appendChild(screenConfigMissing());
+    return;
+  }
+  if(!authReady){
+    app.appendChild(screenConnecting());
+    return;
+  }
+
+  const map = {
+    landing: screenLanding,
+    soloSetup: screenSoloSetup,
+    soloInterstitial: screenSoloInterstitial,
+    soloVoting: screenSoloVoting,
+    hostSetup: screenHostSetup,
+    hostLobby: screenHostLobby,
+    hostReveal: screenReveal,
+    joinCode: screenJoinCode,
+    joinName: screenJoinName,
+    joinVoting: screenJoinVoting,
+    joinWaiting: screenJoinWaiting,
+    joinReveal: screenReveal,
+  };
+  const fn = map[state.screen] || screenLanding;
+  app.appendChild(fn());
+}
+
+function masthead(){
+  const m = el(`
+    <div class="masthead">
+      <div>
+        <div class="plate">ARP · KANTON SOLOTHURN</div>
+        <h1>Risikometer</h1>
+        <div style="font-family:'Source Sans 3',sans-serif; font-size:13px; color:var(--muted); margin-top:2px;">Einstufung von Planungs- und Bauvorhaben</div>
+      </div>
+      <div class="kennung" id="resetLink">Komplexität × Sensitivität<br>Zur Startseite</div>
+    </div>
+  `);
+  m.querySelector('#resetLink').addEventListener('click', () => {
+    stopListening();
+    Object.assign(state, {
+      mode:null, screen:'landing', caseTitle:'', currentName:'', points:[], pendingXY:null,
+      showThreshold:false, sessionCode:'', joinCodeInput:'', participantId:null,
+      waitingNames:[], errorMsg:''
+    });
+    render();
+  });
+  return m;
+}
+
+// ---------- CONFIG / CONNECTION SCREENS ----------
+function screenConfigMissing(){
+  return el(`
+    <div class="panel">
+      <h2>Firebase-Konfiguration fehlt noch</h2>
+      <p class="hint">Diese Datei braucht einmalig deine eigene, kostenlose Firebase-Konfiguration, bevor der Mehrgeräte-Modus funktioniert. Öffne die HTML-Datei in einem Texteditor und ersetze im Abschnitt <code class="inline">FIREBASE-KONFIGURATION</code> das Platzhalter-Objekt <code class="inline">firebaseConfig</code> mit deinen eigenen Werten aus der Firebase Console.</p>
+      <p class="hint">Die Schritt-für-Schritt-Anleitung dazu wurde dir separat mitgeliefert. Solange das nicht erledigt ist, lässt sich diese Datei nicht öffnen/testen – nur der Einzelgerät-Modus würde ohnehin ohne Firebase funktionieren, ist hier aber aus Konsistenzgründen ebenfalls gesperrt, bis die Konfiguration eingetragen ist.</p>
+    </div>
+  `);
+}
+
+function screenConnecting(){
+  const isUndefinedFirebase = authError && /firebase/i.test(authError) && /(find variable|not defined|undefined)/i.test(authError);
+  const isLocalFile = window.location.protocol === 'file:';
+  const w = el(`
+    <div class="panel interstitial">
+      <h2><span class="spinner"></span>Verbinde …</h2>
+      <p>${authError ? ('Verbindung zu Firebase fehlgeschlagen: ' + authError) : 'Baue Verbindung zur Datenbank auf.'}</p>
+      ${(authError && isUndefinedFirebase && isLocalFile) ? `
+        <p class="hint" style="max-width:480px;margin:0 auto 20px;text-align:left;">
+          Das deutet darauf hin, dass die externe Firebase-Bibliothek nicht geladen werden konnte, weil diese Datei
+          lokal per Doppelklick geöffnet wurde (<span style="font-family:'Roboto Mono',monospace;">file://</span>).
+          Manche Browser – insbesondere Safari auf iPhone/iPad – blockieren das Nachladen externer Skripte in diesem Fall.
+          <br><br><strong>Lösung:</strong> Diese Datei auf einer Website/im Intranet veröffentlichen und dort über die
+          <span style="font-family:'Roboto Mono',monospace;">https://</span>-Adresse öffnen statt sie lokal zu doppelklicken.
+        </p>
+      ` : ''}
+      ${authError ? '<div class="btnrow" style="justify-content:center;"><button id="retrybtn">Erneut versuchen</button></div>' : ''}
+    </div>
+  `);
+  const retrybtn = w.querySelector('#retrybtn');
+  if(retrybtn) retrybtn.addEventListener('click', async () => { authError=''; render(); await initFirebase(); render(); });
+  return w;
+}
+
+// ---------- LANDING ----------
+function screenLanding(){
+  const wrap = el(`
+    <div>
+    <div class="panel">
+      <h2>Wie möchtet ihr einstufen?</h2>
+      <div class="choicegrid">
+        <div class="choice" id="cHost">
+          <div class="plate">MEHRERE GERÄTE</div>
+          <h3>Sitzung eröffnen</h3>
+          <p>Du erstellst eine Sitzung mit Code. Alle anderen treten mit diesem Code auf ihrem eigenen Handy/Laptop bei und stufen zeitgleich ein.</p>
+        </div>
+        <div class="choice" id="cJoin">
+          <div class="plate">MEHRERE GERÄTE</div>
+          <h3>Sitzung beitreten</h3>
+          <p>Jemand hat bereits eine Sitzung eröffnet und dir einen Code gegeben. Hier eintreten und einstufen.</p>
+        </div>
+      </div>
+      <div class="hint">Für den Mehrgeräte-Modus muss diese HTML-Datei bei allen Teilnehmenden geöffnet sein (dieselbe Datei, mit deiner Firebase-Konfiguration). Die Daten laufen über deine eigene Firebase-Datenbank.</div>
+    </div>
+
+    <div class="panel" id="qrPanel">
+      <h2>Diese Seite per QR-Code teilen</h2>
+      <p class="hint" id="qrHint"></p>
+      <label for="qrUrlInput">Öffentliche Adresse dieser Seite</label>
+      <input type="text" id="qrUrlInput" placeholder="https://intranet.so.ch/arp/risikometer.html">
+      <div class="btnrow"><button id="qrShowBtn">QR-Code erzeugen</button></div>
+      <div id="qrResult" style="margin-top:18px; text-align:center;"></div>
+    </div>
+    </div>
+  `);
+  const qrUrlInput = wrap.querySelector('#qrUrlInput');
+  const qrHint = wrap.querySelector('#qrHint');
+  const currentUrl = window.location.href;
+  if(currentUrl.startsWith('http')){
+    qrUrlInput.value = currentUrl;
+    qrHint.textContent = 'Adresse dieser Seite wurde automatisch erkannt. Bei Bedarf anpassen und QR-Code erzeugen.';
+  } else {
+    qrHint.textContent = 'Diese Datei ist gerade lokal geöffnet (kein http-Link), darum keine automatische Erkennung. Trage hier die Adresse ein, unter der du die Datei auf deiner Website/Intranet-Ablage veröffentlicht hast.';
+  }
+  wrap.querySelector('#qrShowBtn').addEventListener('click', () => {
+    const url = qrUrlInput.value.trim();
+    const qrResult = wrap.querySelector('#qrResult');
+    if(!url){ qrResult.innerHTML = '<span class="error">Bitte zuerst eine Adresse eingeben.</span>'; return; }
+    const encoded = encodeURIComponent(url);
+    qrResult.innerHTML = `
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encoded}" alt="QR-Code" style="border:1px solid var(--line); padding:12px; background:#fff;">
+      <div class="hint">Zeigt auf: <span style="font-family:'Roboto Mono',monospace;">${url}</span><br>Zum Präsentieren einfach diesen Bereich auf den Beamer/Bildschirm bringen, oder Bild speichern/ausdrucken.</div>
+    `;
+  });
+  wrap.querySelector('#cHost').addEventListener('click', () => { state.mode='host'; state.screen='hostSetup'; render(); });
+  wrap.querySelector('#cJoin').addEventListener('click', () => { state.mode='participant'; state.screen='joinCode'; state.errorMsg=''; render(); });
+  return wrap;
+}
+
+// ---------- SHARED: matrix builder ----------
+function buildMatrixShell(){
+  const wrap = el(`
+    <div class="matrixwrap">
+      <div class="axistitle-y">${Y_AXIS_TITLE}</div>
+      <div class="axisticks-y" id="yticksEl"></div>
+      <div class="matrix" id="matrixEl">
+        <div class="gridlines" id="gridlinesEl"></div>
+      </div>
+      <div class="axisticks-x" id="xticksEl"></div>
+      <div class="axistitle-x">${X_AXIS_TITLE}</div>
+    </div>
+  `);
+  const gridlinesEl = wrap.querySelector('#gridlinesEl');
+  for(let i=1;i<4;i++){
+    gridlinesEl.appendChild(el(`<div class="v" style="left:${i*25}%"></div>`));
+    gridlinesEl.appendChild(el(`<div class="h" style="top:${i*25}%"></div>`));
+  }
+  const xticksEl = wrap.querySelector('#xticksEl');
+  X_LABELS.forEach(l => xticksEl.appendChild(el(`<span>${l}</span>`)));
+  const yticksEl = wrap.querySelector('#yticksEl');
+  [...Y_LABELS].reverse().forEach(l => yticksEl.appendChild(el(`<span>${l}</span>`)));
+  return wrap;
+}
+
+// ---------- SOLO MODE ----------
+function screenSoloSetup(){
+  const wrap = el(`
+    <div class="panel">
+      <h2>Gesuch festlegen</h2>
+      <label for="titlein">Bezeichnung / Dossier-Nr.</label>
+      <input type="text" id="titlein" placeholder="z. B. BG 2026-0417, Scheune Umnutzung Gde. X" value="${state.caseTitle}">
+      <div class="hint">Jede Person gibt nacheinander ihren Namen ein, setzt ihren Punkt und reicht das Gerät weiter, ohne vorherige Punkte zu sehen.</div>
+      <div class="btnrow"><button id="startbtn">Einstufung starten</button></div>
+    </div>
+  `);
+  wrap.querySelector('#titlein').addEventListener('input', e => state.caseTitle = e.target.value);
+  wrap.querySelector('#startbtn').addEventListener('click', () => { state.screen='soloInterstitial'; render(); });
+  return wrap;
+}
+
+function screenSoloInterstitial(){
+  const count = state.points.length;
+  const wrap = el(`
+    <div class="panel interstitial">
+      <div class="plate">${state.caseTitle || 'GESUCH OHNE BEZEICHNUNG'}</div>
+      <h2>${count === 0 ? 'Gerät bereit übergeben' : 'Nächste Person'}</h2>
+      <p>${count === 0 ? 'Gerät an die erste Person weitergeben.' : count + ' Person(en) haben bereits eingestuft.'}</p>
+      <label for="namein" style="max-width:280px;margin:0 auto 6px;text-align:left;">Name der Person</label>
+      <input type="text" id="namein" style="max-width:280px;margin:0 auto 18px;display:block;" placeholder="Vorname Name">
+      <div class="btnrow" style="justify-content:center;">
+        <button id="gobtn" disabled>Bereit – Matrix zeigen</button>
+        ${count > 0 ? '<button class="secondary" id="revealbtn">Alle fertig – Ergebnis zeigen</button>' : ''}
+      </div>
+    </div>
+  `);
+  const nameInput = wrap.querySelector('#namein');
+  const goBtn = wrap.querySelector('#gobtn');
+  nameInput.addEventListener('input', () => { goBtn.disabled = nameInput.value.trim().length === 0; });
+  nameInput.addEventListener('keydown', e => { if(e.key==='Enter' && !goBtn.disabled) goBtn.click(); });
+  goBtn.addEventListener('click', () => {
+    state.currentName = nameInput.value.trim();
+    state.pendingXY = null;
+    state.screen = 'soloVoting';
+    render();
+  });
+  const revealBtn = wrap.querySelector('#revealbtn');
+  if(revealBtn) revealBtn.addEventListener('click', () => { state.screen='hostReveal'; render(); });
+  setTimeout(() => nameInput.focus(), 0);
+  return wrap;
+}
+
+function screenSoloVoting(){
+  const wrap = el(`
+    <div class="panel">
+      <div class="matrix-title"><span>${state.caseTitle || 'Gesuch'}</span><span>Person: ${state.currentName}</span></div>
+      <div id="matrixHolder"></div>
+      <div class="confirmbar">
+        <span class="status" id="statusText">Punkt auf der Matrix setzen …</span>
+        <button id="confirmbtn" disabled>Einstufung bestätigen</button>
+      </div>
+      <div class="hint">Klicken Sie auf das Feld, das die Sensitivität der Umgebung und die Komplexität des Beurteilungsgegenstands dieses Gesuchs am besten beschreibt.</div>
+    </div>
+  `);
+  const shell = buildMatrixShell();
+  wrap.querySelector('#matrixHolder').appendChild(shell);
+  const matrixEl = shell.querySelector('#matrixEl');
+  let marker = null;
+  matrixEl.addEventListener('click', (e) => {
+    const rect = matrixEl.getBoundingClientRect();
+    const x = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    const yRaw = Math.min(1, Math.max(0, (e.clientY - rect.top) / rect.height));
+    const y = 1 - yRaw;
+    state.pendingXY = { x, y };
+    if(marker) marker.remove();
+    marker = el(`<div class="marker pending" style="left:${x*100}%; top:${yRaw*100}%"></div>`);
+    matrixEl.appendChild(marker);
+    wrap.querySelector('#confirmbtn').disabled = false;
+    const col = Math.min(3, Math.floor(x*4));
+    const row = Math.min(3, Math.floor(y*4));
+    wrap.querySelector('#statusText').textContent = `${X_LABELS[col]} × ${Y_LABELS[row]} – bereit zum Bestätigen`;
+  });
+  wrap.querySelector('#confirmbtn').addEventListener('click', () => {
+    if(!state.pendingXY) return;
+    state.points.push({name: state.currentName, x: state.pendingXY.x, y: state.pendingXY.y});
+    state.pendingXY = null;
+    state.currentName = '';
+    state.screen = 'soloInterstitial';
+    render();
+  });
+  return wrap;
+}
+
+// ---------- HOST MODE (Firebase) ----------
+function screenHostSetup(){
+  const wrap = el(`
+    <div class="panel">
+      <h2>Sitzung eröffnen</h2>
+      <label for="titlein">Bezeichnung / Dossier-Nr. des Gesuchs</label>
+      <input type="text" id="titlein" placeholder="z. B. BG 2026-0417, Scheune Umnutzung Gde. X" value="${state.caseTitle}">
+      <div class="hint">Nach dem Erstellen erhältst du einen 4-stelligen Code. Gib diesen an alle Teilnehmenden weiter, damit sie über "Sitzung beitreten" einsteigen können.</div>
+      <div class="btnrow"><button id="createbtn" disabled>Sitzung erstellen</button></div>
+      <div class="error" id="errbox" style="display:none;"></div>
+    </div>
+  `);
+  const titlein = wrap.querySelector('#titlein');
+  const createbtn = wrap.querySelector('#createbtn');
+  titlein.addEventListener('input', () => { state.caseTitle = titlein.value; createbtn.disabled = titlein.value.trim().length===0; });
+  createbtn.disabled = titlein.value.trim().length === 0;
+  createbtn.addEventListener('click', async () => {
+    createbtn.disabled = true;
+    createbtn.textContent = 'Erstelle …';
+    const code = genCode();
+    const meta = { title: state.caseTitle, createdAt: Date.now(), revealed: false };
+    try{
+      await db.ref(`sessions/${code}/meta`).set(meta);
+      state.sessionCode = code;
+      state.screen = 'hostLobby';
+      render();
+    }catch(e){
+      const errbox = wrap.querySelector('#errbox');
+      errbox.style.display='block';
+      errbox.textContent = 'Sitzung konnte nicht erstellt werden. Details: ' + ((e && e.message) ? e.message : String(e));
+      createbtn.disabled = false;
+      createbtn.textContent = 'Sitzung erstellen';
+    }
+  });
+  return wrap;
+}
+
+function screenHostLobby(){
+  const wrap = el(`
+    <div class="panel">
+      <div class="plate">${state.caseTitle}</div>
+      <h2>Sitzung läuft</h2>
+      <div class="codeshow">${state.sessionCode}</div>
+      <div class="hint" style="text-align:center;">Diesen Code an alle Teilnehmenden weitergeben. Sie tippen ihn unter "Sitzung beitreten" ein.</div>
+      <div class="waitlist" id="waitlist"></div>
+      <p class="hint" id="countText"><span class="spinner"></span>Warte auf Einstufungen …</p>
+      <div class="btnrow">
+        <button id="revealbtn" disabled>Ergebnis für alle anzeigen</button>
+      </div>
+    </div>
+  `);
+
+  const pointsRef = db.ref(`sessions/${state.sessionCode}/points`);
+  activeListenerRef = pointsRef;
+  pointsRef.on('value', (snapshot) => {
+    const val = snapshot.val() || {};
+    const names = Object.values(val).map(p => p.name);
+    state.waitingNames = names;
+    const wl = wrap.querySelector('#waitlist');
+    if(wl){
+      wl.innerHTML = '';
+      names.forEach(n => wl.appendChild(el(`<div class="chip">${n} ✓</div>`)));
+    }
+    const countText = wrap.querySelector('#countText');
+    if(countText) countText.innerHTML = names.length===0
+      ? '<span class="spinner"></span>Warte auf Einstufungen …'
+      : names.length + ' Person(en) haben eingestuft.';
+    const revealbtn = wrap.querySelector('#revealbtn');
+    if(revealbtn) revealbtn.disabled = names.length === 0;
+  });
+
+  wrap.querySelector('#revealbtn').addEventListener('click', async () => {
+    stopListening();
+    try{
+      const metaSnap = await db.ref(`sessions/${state.sessionCode}/meta`).once('value');
+      const meta = metaSnap.val() || { title: state.caseTitle };
+      meta.revealed = true;
+      await db.ref(`sessions/${state.sessionCode}/meta`).set(meta);
+      await loadPointsFromDb();
+      state.screen = 'hostReveal';
+      render();
+    }catch(e){
+      alert('Ergebnis konnte nicht angezeigt werden: ' + ((e && e.message) ? e.message : String(e)));
+    }
+  });
+
+  return wrap;
+}
+
+async function loadPointsFromDb(){
+  const snap = await db.ref(`sessions/${state.sessionCode}/points`).once('value');
+  const val = snap.val() || {};
+  state.points = Object.values(val);
+}
+
+// ---------- JOIN / PARTICIPANT MODE ----------
+function screenJoinCode(){
+  const wrap = el(`
+    <div class="panel">
+      <span class="backlink" id="back">← Zurück</span>
+      <h2>Sitzung beitreten</h2>
+      <label for="codein">Sitzungscode</label>
+      <input type="text" id="codein" class="codeinput" maxlength="4" placeholder="ABCD" value="${state.joinCodeInput}">
+      <div class="error" id="errbox" style="display:${state.errorMsg?'block':'none'};">${state.errorMsg}</div>
+      <div class="btnrow"><button id="joinbtn" disabled>Beitreten</button></div>
+    </div>
+  `);
+  wrap.querySelector('#back').addEventListener('click', () => { state.screen='landing'; render(); });
+  const codein = wrap.querySelector('#codein');
+  const joinbtn = wrap.querySelector('#joinbtn');
+  codein.addEventListener('input', () => {
+    codein.value = codein.value.toUpperCase().replace(/[^A-Z0-9]/g,'');
+    state.joinCodeInput = codein.value;
+    joinbtn.disabled = codein.value.length !== 4;
+  });
+  codein.addEventListener('keydown', e => { if(e.key==='Enter' && !joinbtn.disabled) joinbtn.click(); });
+  joinbtn.addEventListener('click', async () => {
+    joinbtn.disabled = true;
+    joinbtn.textContent = 'Prüfe …';
+    try{
+      const snap = await db.ref(`sessions/${state.joinCodeInput}/meta`).once('value');
+      const meta = snap.val();
+      if(!meta){
+        state.errorMsg = 'Kein Gesuch mit diesem Code gefunden. Code prüfen und erneut versuchen.';
+        state.screen = 'joinCode';
+        render();
+        return;
+      }
+      state.sessionCode = state.joinCodeInput;
+      state.caseTitle = meta.title || '';
+      state.errorMsg = '';
+      state.screen = 'joinName';
+      render();
+    }catch(e){
+      state.errorMsg = 'Fehler beim Prüfen des Codes: ' + ((e && e.message) ? e.message : String(e));
+      state.screen = 'joinCode';
+      render();
+    }
+  });
+  setTimeout(() => codein.focus(), 0);
+  return wrap;
+}
+
+function screenJoinName(){
+  const wrap = el(`
+    <div class="panel">
+      <div class="plate">${state.caseTitle || 'Gesuch'}</div>
+      <h2>Dein Name</h2>
+      <label for="namein">Name</label>
+      <input type="text" id="namein" placeholder="Vorname Name">
+      <div class="btnrow"><button id="gobtn" disabled>Weiter zur Matrix</button></div>
+    </div>
+  `);
+  const namein = wrap.querySelector('#namein');
+  const gobtn = wrap.querySelector('#gobtn');
+  namein.addEventListener('input', () => { gobtn.disabled = namein.value.trim().length===0; });
+  namein.addEventListener('keydown', e => { if(e.key==='Enter' && !gobtn.disabled) gobtn.click(); });
+  gobtn.addEventListener('click', () => {
+    state.currentName = namein.value.trim();
+    state.participantId = state.currentName.toLowerCase().replace(/[^a-z0-9]+/g,'-') + '-' + Math.random().toString(36).slice(2,7);
+    state.screen = 'joinVoting';
+    render();
+  });
+  setTimeout(() => namein.focus(), 0);
+  return wrap;
+}
+
+function screenJoinVoting(){
+  const wrap = el(`
+    <div class="panel">
+      <div class="matrix-title"><span>${state.caseTitle || 'Gesuch'}</span><span>Du: ${state.currentName}</span></div>
+      <div id="matrixHolder"></div>
+      <div class="confirmbar">
+        <span class="status" id="statusText">Punkt auf der Matrix setzen …</span>
+        <button id="confirmbtn" disabled>Einstufung senden</button>
+      </div>
+      <div class="hint">Deine Einstufung wird erst sichtbar, wenn die einladende Person das Ergebnis für alle anzeigt.</div>
+      <div class="error" id="errbox" style="display:none;"></div>
+    </div>
+  `);
+  const shell = buildMatrixShell();
+  wrap.querySelector('#matrixHolder').appendChild(shell);
+  const matrixEl = shell.querySelector('#matrixEl');
+  let marker = null;
+  matrixEl.addEventListener('click', (e) => {
+    const rect = matrixEl.getBoundingClientRect();
+    const x = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    const yRaw = Math.min(1, Math.max(0, (e.clientY - rect.top) / rect.height));
+    const y = 1 - yRaw;
+    state.pendingXY = { x, y };
+    if(marker) marker.remove();
+    marker = el(`<div class="marker pending" style="left:${x*100}%; top:${yRaw*100}%"></div>`);
+    matrixEl.appendChild(marker);
+    wrap.querySelector('#confirmbtn').disabled = false;
+    const col = Math.min(3, Math.floor(x*4));
+    const row = Math.min(3, Math.floor(y*4));
+    wrap.querySelector('#statusText').textContent = `${X_LABELS[col]} × ${Y_LABELS[row]} – bereit zum Senden`;
+  });
+  wrap.querySelector('#confirmbtn').addEventListener('click', async () => {
+    if(!state.pendingXY) return;
+    const btn = wrap.querySelector('#confirmbtn');
+    btn.disabled = true;
+    btn.textContent = 'Sende …';
+    try{
+      await db.ref(`sessions/${state.sessionCode}/points/${state.participantId}`).set(
+        { name: state.currentName, x: state.pendingXY.x, y: state.pendingXY.y });
+      state.screen = 'joinWaiting';
+      render();
+    }catch(e){
+      const errbox = wrap.querySelector('#errbox');
+      errbox.style.display = 'block';
+      errbox.textContent = 'Übermittlung fehlgeschlagen: ' + ((e && e.message) ? e.message : String(e));
+      btn.disabled = false;
+      btn.textContent = 'Einstufung senden';
+    }
+  });
+  return wrap;
+}
+
+function screenJoinWaiting(){
+  const wrap = el(`
+    <div class="panel interstitial">
+      <div class="plate">${state.caseTitle || 'Gesuch'}</div>
+      <h2><span class="spinner"></span>Danke, ${state.currentName}</h2>
+      <p>Deine Einstufung wurde übermittelt. Sobald die einladende Person das Ergebnis anzeigt, erscheint es hier automatisch.</p>
+    </div>
+  `);
+
+  const metaRef = db.ref(`sessions/${state.sessionCode}/meta`);
+  activeListenerRef = metaRef;
+  metaRef.on('value', async (snapshot) => {
+    const meta = snapshot.val();
+    if(meta && meta.revealed){
+      stopListening();
+      await loadPointsFromDb();
+      state.screen = 'joinReveal';
+      render();
+    }
+  });
+
+  return wrap;
+}
+
+// ---------- REVEAL ----------
+function screenReveal(){
+  const wrap = el(`
+    <div class="panel">
+      <div class="matrix-title"><span>${state.caseTitle || 'Gesuch'}</span><span>${state.points.length} Einstufung(en)</span></div>
+      <div id="matrixHolder"></div>
+      <div class="toggle-row">
+        <input type="checkbox" id="thresholdToggle" ${state.showThreshold?'checked':''}>
+        <label for="thresholdToggle" style="margin:0;text-transform:none;font-weight:400;">Beispielhafte Schwellenlinie einblenden (illustrativ, nicht verbindlich)</label>
+      </div>
+      <div class="legend">
+        <div class="item"><span class="swatch" style="background:#4C9A2A"></span> Bagatelle</div>
+        <div class="item"><span class="swatch" style="background:#E0921E"></span> Erhöhte Prüftiefe</div>
+        <div class="item"><span class="swatch" style="background:#C0001A"></span> Grosse Tragweite</div>
+      </div>
+      <table class="resultlist">
+        <thead><tr><th>Person</th><th>Sensitivität Umgebung</th><th>Komplexität Objekt</th><th>Einstufung</th></tr></thead>
+        <tbody id="resultBody"></tbody>
+      </table>
+      <div class="btnrow">
+        ${state.mode==='host' ? '<button class="secondary" id="backlobby">Zurück zur Sitzung</button>' : ''}
+        <button class="danger" id="resetbtn">Neue Runde starten</button>
+      </div>
+    </div>
+  `);
+
+  const shell = buildMatrixShell();
+  wrap.querySelector('#matrixHolder').appendChild(shell);
+  const matrixEl = shell.querySelector('#matrixEl');
+
+  matrixEl.appendChild(el(`
+    <svg id="thresholdSvg" style="position:absolute;inset:0;width:100%;height:100%;display:${state.showThreshold?'block':'none'}" preserveAspectRatio="none" viewBox="0 0 100 100">
+      <polyline points="0,25 25,25 25,50 50,50 50,75 75,75 75,100" fill="none" stroke="#1A1A18" stroke-width="1.6" stroke-dasharray="4 2.5" vector-effect="non-scaling-stroke"/>
+    </svg>
+  `));
+
+  state.points.forEach(p => {
+    const top = (1-p.y)*100;
+    const left = p.x*100;
+    matrixEl.appendChild(el(`<div class="marker" style="left:${left}%; top:${top}%"></div>`));
+    matrixEl.appendChild(el(`<div class="marker-label" style="left:${left}%; top:${top}%">${p.name}</div>`));
+  });
+
+  const tbody = wrap.querySelector('#resultBody');
+  state.points.forEach(p => {
+    const z = zoneFor(p.x, p.y);
+    const col = Math.min(3, Math.max(0, Math.floor(p.x*4)));
+    const row = Math.min(3, Math.max(0, Math.floor(p.y*4)));
+    tbody.appendChild(el(`
+      <tr>
+        <td>${p.name}</td>
+        <td>${X_LABELS[col]}</td>
+        <td>${Y_LABELS[row]}</td>
+        <td><span class="zonetag" style="background:${z.color}">${z.label}</span></td>
+      </tr>
+    `));
+  });
+
+  wrap.querySelector('#thresholdToggle').addEventListener('change', e => {
+    state.showThreshold = e.target.checked;
+    wrap.querySelector('#thresholdSvg').style.display = e.target.checked ? 'block' : 'none';
+  });
+
+  const backlobby = wrap.querySelector('#backlobby');
+  if(backlobby) backlobby.addEventListener('click', () => { state.screen='hostLobby'; render(); });
+
+  wrap.querySelector('#resetbtn').addEventListener('click', () => {
+    if(confirm('Neue Runde starten? Aktuelle Einstufungen dieser Sitzung gehen aus der Ansicht verloren.')){
+      state.points = [];
+      state.showThreshold = false;
+      if(state.mode==='solo'){ state.screen='soloSetup'; state.caseTitle=''; }
+      else if(state.mode==='host'){ state.screen='hostSetup'; state.caseTitle=''; state.sessionCode=''; }
+      else { state.screen='landing'; }
+      render();
+    }
+  });
+
+  return wrap;
+}
+
+// ---------- BOOT ----------
+(async function boot(){
+  render(); // shows config-missing or connecting screen immediately
+  if(!CONFIG_IS_PLACEHOLDER){
+    await initFirebase();
+  }
+  render();
+})();
+</script>
+</body>
+</html>
