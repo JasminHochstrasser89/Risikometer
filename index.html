@@ -152,7 +152,7 @@
    ============================================================ */
 const firebaseConfig = {
 
-    apiKey: "AIzaSyDl6qzAW9OXa7lCkwHczMgd-UV-zqOhN2I",
+    apiKey: "AIzaSyBEmD2TnsQVHMMWug-kp6YKnXzPewxNVXo",
 
     authDomain: "risikometer.firebaseapp.com",
 
@@ -751,10 +751,6 @@ function screenReveal(){
         <div class="item"><span class="swatch" style="background:#E0921E"></span> Erhöhte Prüftiefe</div>
         <div class="item"><span class="swatch" style="background:#C0001A"></span> Grosse Tragweite</div>
       </div>
-      <table class="resultlist">
-        <thead><tr><th>Person</th><th>Sensitivität Umgebung</th><th>Komplexität Objekt</th><th>Einstufung</th></tr></thead>
-        <tbody id="resultBody"></tbody>
-      </table>
       <div class="btnrow">
         ${state.mode==='host' ? '<button class="secondary" id="backlobby">Zurück zur Sitzung</button>' : ''}
         <button class="danger" id="resetbtn">Neue Runde starten</button>
@@ -777,21 +773,6 @@ function screenReveal(){
     const left = p.x*100;
     matrixEl.appendChild(el(`<div class="marker" style="left:${left}%; top:${top}%"></div>`));
     matrixEl.appendChild(el(`<div class="marker-label" style="left:${left}%; top:${top}%">${p.name}</div>`));
-  });
-
-  const tbody = wrap.querySelector('#resultBody');
-  state.points.forEach(p => {
-    const z = zoneFor(p.x, p.y);
-    const col = Math.min(3, Math.max(0, Math.floor(p.x*4)));
-    const row = Math.min(3, Math.max(0, Math.floor(p.y*4)));
-    tbody.appendChild(el(`
-      <tr>
-        <td>${p.name}</td>
-        <td>${X_LABELS[col]}</td>
-        <td>${Y_LABELS[row]}</td>
-        <td><span class="zonetag" style="background:${z.color}">${z.label}</span></td>
-      </tr>
-    `));
   });
 
   wrap.querySelector('#thresholdToggle').addEventListener('change', e => {
